@@ -37,7 +37,6 @@ public class Product {
     private Category category;
 
     @Positive
-    @NotBlank
     @Column(nullable = false)
     private BigDecimal price;
 
@@ -54,9 +53,6 @@ public class Product {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-
-
 
 
 }

@@ -2,6 +2,7 @@ package com.micro.product.services.impl;
 
 import com.micro.product.dto.productDTO.ProductReq;
 import com.micro.product.dto.productDTO.ProductRes;
+import com.micro.product.exceptions.CategoryNotFoundException;
 import com.micro.product.models.Category;
 import com.micro.product.models.Product;
 import com.micro.product.repository.CategoryRepo;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,18 +23,22 @@ public class ProductService implements ProductServiceInterface {
 
     @Override
     public ProductRes createProduct(ProductReq req) {
+
         Product p = new Product();
         p.setName(req.getName());
         p.setDescription(req.getDescription());
         p.setPrice(req.getPrice());
-        p.setSku(req.getSku());
         p.setBrand(req.getBrand());
         p.setImageUrl(req.getImageUrl());
+
+        // set sku
+        String sku = "SKU-" + UUID.randomUUID().toString().substring(0,8);
+        p.setSku(sku);
 
         // if category is provided , find it and use it
         if(req.getCategoryId() != null){
             Category c = categoryRepo.findById(req.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category does not exist..."));
+                    .orElseThrow(() -> new CategoryNotFoundException("Category does not exist..."));
             p.setCategory(c);
         }
 
@@ -65,6 +71,7 @@ public class ProductService implements ProductServiceInterface {
         res.setPrice(p.getPrice());
         res.setCategory(p.getCategory().getName());
         res.setBrand(p.getBrand());
+        res.setSku(p.getSku());
         res.setImageUrl(p.getImageUrl());
         return res;
     }

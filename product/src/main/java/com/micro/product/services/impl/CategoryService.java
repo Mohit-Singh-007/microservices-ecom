@@ -2,10 +2,15 @@ package com.micro.product.services.impl;
 
 import com.micro.product.dto.categoryDTO.CategoryReq;
 import com.micro.product.dto.categoryDTO.CategoryRes;
+import com.micro.product.exceptions.CategoryAlreadyExists;
+import com.micro.product.exceptions.CategoryNotFoundException;
 import com.micro.product.models.Category;
 import com.micro.product.repository.CategoryRepo;
 import com.micro.product.services.CategoryServiceInterface;
+import com.micro.product.utils.PaginatedResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,8 +24,15 @@ public class CategoryService implements CategoryServiceInterface {
 
     @Override
     public CategoryRes createCategory(CategoryReq req) {
+
+        String name = req.getName().trim().toLowerCase();
+        categoryRepo.findByName(name)
+                .ifPresent((c)->{
+                    throw new CategoryAlreadyExists("Category already exists...");
+                });
+
         Category c = new Category();
-        c.setName(req.getName());
+        c.setName(name);
         c.setDescription(req.getDescription());
 
         Category saved = categoryRepo.save(c);
@@ -28,22 +40,29 @@ public class CategoryService implements CategoryServiceInterface {
     }
 
     @Override
-    public List<CategoryRes> getAllCategories() {
-       return categoryRepo.findAll().stream()
-                .map(this::mapToCategoryRes).toList();
+    public PaginatedResponse<CategoryRes> getAllCategories(Pageable pageable) {
+        Page<Category> page = categoryRepo.findAll(pageable);
+
+        List<CategoryRes> res = page.stream().map(this::mapToCategoryRes).toList();
+
+        return new PaginatedResponse<>(res,page);
+
     }
 
     @Override
     public CategoryRes getCategoryById(Long id) {
         Category c = categoryRepo.findById(id)
-                .orElseThrow(()-> new RuntimeException("Cannot find category..."));
+                .orElseThrow(()-> new CategoryNotFoundException("Cannot find category with id: "+id));
 
         return mapToCategoryRes(c);
     }
 
     @Override
     public void deleteCategoryById(Long id) {
-        categoryRepo.deleteById(id);
+        Category c = categoryRepo.findById(id)
+                .orElseThrow(()-> new CategoryNotFoundException("Cannot find category with id: "+id));
+
+        categoryRepo.delete(c);
     }
 
     CategoryRes mapToCategoryRes(Category c){

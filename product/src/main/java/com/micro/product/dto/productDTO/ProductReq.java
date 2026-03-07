@@ -18,11 +18,9 @@ public class ProductReq {
     private Long categoryId;
 
     @NotNull
+    @Positive
     @DecimalMin(value = "0.0")
     private BigDecimal price;
-
-    @NotBlank
-    private String sku;
 
     private String brand;
 
