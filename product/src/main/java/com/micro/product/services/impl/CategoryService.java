@@ -41,7 +41,7 @@ public class CategoryService implements CategoryServiceInterface {
 
     @Override
     public PaginatedResponse<CategoryRes> getAllCategories(Pageable pageable) {
-        Page<Category> page = categoryRepo.findAll(pageable);
+        Page<Category> page = categoryRepo.findAllByIsActiveTrue(pageable);
 
         List<CategoryRes> res = page.stream().map(this::mapToCategoryRes).toList();
 
@@ -51,7 +51,7 @@ public class CategoryService implements CategoryServiceInterface {
 
     @Override
     public CategoryRes getCategoryById(Long id) {
-        Category c = categoryRepo.findById(id)
+        Category c = categoryRepo.findByCategoryIdAndIsActiveTrue(id)
                 .orElseThrow(()-> new CategoryNotFoundException("Cannot find category with id: "+id));
 
         return mapToCategoryRes(c);
@@ -59,10 +59,10 @@ public class CategoryService implements CategoryServiceInterface {
 
     @Override
     public void deleteCategoryById(Long id) {
-        Category c = categoryRepo.findById(id)
+        Category c = categoryRepo.findByCategoryIdAndIsActiveTrue(id)
                 .orElseThrow(()-> new CategoryNotFoundException("Cannot find category with id: "+id));
-
-        categoryRepo.delete(c);
+        c.setActive(false);
+        categoryRepo.save(c);
     }
 
     CategoryRes mapToCategoryRes(Category c){

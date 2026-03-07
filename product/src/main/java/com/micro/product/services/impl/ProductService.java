@@ -3,12 +3,16 @@ package com.micro.product.services.impl;
 import com.micro.product.dto.productDTO.ProductReq;
 import com.micro.product.dto.productDTO.ProductRes;
 import com.micro.product.exceptions.CategoryNotFoundException;
+import com.micro.product.exceptions.ProductNotFoundException;
 import com.micro.product.models.Category;
 import com.micro.product.models.Product;
 import com.micro.product.repository.CategoryRepo;
 import com.micro.product.repository.ProductRepo;
 import com.micro.product.services.ProductServiceInterface;
+import com.micro.product.utils.PaginatedResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,18 +52,33 @@ public class ProductService implements ProductServiceInterface {
     }
 
     @Override
-    public List<ProductRes> getAllProducts() {
-        return List.of();
+    public PaginatedResponse<ProductRes> getAllProducts(Pageable pageable) {
+
+        Page<Product> p = productRepo.findAllByIsActiveTrue(pageable);
+
+        List<ProductRes> res = p.stream()
+                        .map(this::mapToProductRes).toList();
+
+        return new PaginatedResponse<>(res,p);
+
     }
 
     @Override
     public ProductRes getProductById(Long productId) {
-        return null;
+        Product p = productRepo.findByProductIdAndIsActiveTrue(productId)
+                .orElseThrow(()->new ProductNotFoundException("Product not found with id: "+productId));
+
+        return mapToProductRes(p);
     }
 
     @Override
     public void deleteProduct(Long productId) {
 
+        Product p = productRepo.findById(productId)
+                .orElseThrow(()-> new ProductNotFoundException("Product not found with id: "+productId));
+
+        p.setActive(false);
+        productRepo.save(p);
     }
 
 
@@ -69,10 +88,15 @@ public class ProductService implements ProductServiceInterface {
         res.setName(p.getName());
         res.setDescription(p.getDescription());
         res.setPrice(p.getPrice());
-        res.setCategory(p.getCategory().getName());
         res.setBrand(p.getBrand());
         res.setSku(p.getSku());
         res.setImageUrl(p.getImageUrl());
+
+        res.setCategory(
+                p.getCategory() != null && p.getCategory().isActive()
+                ? p.getCategory().getName()
+                : "Uncategorized"
+        );
         return res;
     }
 }

@@ -40,8 +40,8 @@ public class CategoryController {
         return ResponseEntity.ok(res);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategoryById(@PathVariable Long id){
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> softDeleteCategoryById(@PathVariable Long id){
         category.deleteCategoryById(id);
         return ResponseEntity.noContent().build();
     }
