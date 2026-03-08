@@ -6,11 +6,13 @@ import com.micro.product.exceptions.CategoryAlreadyExists;
 import com.micro.product.exceptions.CategoryNotFoundException;
 import com.micro.product.models.Category;
 import com.micro.product.repository.CategoryRepo;
+import com.micro.product.repository.specifications.CategorySpecifications;
 import com.micro.product.services.CategoryServiceInterface;
 import com.micro.product.utils.PaginatedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -57,11 +59,31 @@ public class CategoryService implements CategoryServiceInterface {
         return mapToCategoryRes(c);
     }
 
+
+    public PaginatedResponse<CategoryRes> getCategoriesForAdmin(
+            Boolean isActive,
+            String search,
+            Pageable pageable
+    ) {
+
+
+        Specification<Category> spec = CategorySpecifications.withFilters(isActive,search);
+
+        Page<Category> c = categoryRepo.findAll(spec, pageable);
+
+        List<CategoryRes> res = c.stream()
+                .map(this::mapToCategoryRes)
+                .toList();
+
+        return new PaginatedResponse<>(res, c);
+    }
+
+
     @Override
-    public void deleteCategoryById(Long id) {
-        Category c = categoryRepo.findByCategoryIdAndIsActiveTrue(id)
+    public void toggleCategoryStatus(Long id) {
+        Category c = categoryRepo.findById(id)
                 .orElseThrow(()-> new CategoryNotFoundException("Cannot find category with id: "+id));
-        c.setActive(false);
+        c.setActive(!c.isActive());
         categoryRepo.save(c);
     }
 
@@ -70,6 +92,8 @@ public class CategoryService implements CategoryServiceInterface {
         res.setId(c.getCategoryId());
         res.setName(c.getName());
         res.setDescription(c.getDescription());
+        res.setActive(c.isActive());
+        res.setCreatedAt(c.getCreatedAt());
         return res;
     }
 }

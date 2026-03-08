@@ -11,5 +11,7 @@ public interface CategoryServiceInterface {
     PaginatedResponse<CategoryRes> getAllCategories(Pageable pageable);
     CategoryRes getCategoryById(Long id);
 
-    void deleteCategoryById(Long id);
+    PaginatedResponse<CategoryRes> getCategoriesForAdmin(Boolean status,String search,Pageable pageable);
+
+    void toggleCategoryStatus(Long id);
 }

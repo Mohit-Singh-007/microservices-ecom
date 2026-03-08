@@ -8,13 +8,16 @@ import com.micro.product.models.Category;
 import com.micro.product.models.Product;
 import com.micro.product.repository.CategoryRepo;
 import com.micro.product.repository.ProductRepo;
+import com.micro.product.repository.specifications.ProductSpecification;
 import com.micro.product.services.ProductServiceInterface;
 import com.micro.product.utils.PaginatedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,14 +75,27 @@ public class ProductService implements ProductServiceInterface {
     }
 
     @Override
-    public void deleteProduct(Long productId) {
+    public PaginatedResponse<ProductRes> getProductsForAdmin(Boolean status, String search, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+        Specification<Product> spec = ProductSpecification.withFilters(status,search,categoryId,minPrice,maxPrice);
+
+        Page<Product> p = productRepo.findAll(spec,pageable);
+
+        List<ProductRes> res = p.stream().map(this::mapToProductRes).toList();
+
+        return new PaginatedResponse<>(res,p);
+
+    }
+
+    @Override
+    public void toggleProductStatus(Long productId) {
 
         Product p = productRepo.findById(productId)
                 .orElseThrow(()-> new ProductNotFoundException("Product not found with id: "+productId));
 
-        p.setActive(false);
+        p.setActive(!p.isActive());
         productRepo.save(p);
     }
+
 
 
     ProductRes mapToProductRes(Product p){
@@ -91,6 +107,8 @@ public class ProductService implements ProductServiceInterface {
         res.setBrand(p.getBrand());
         res.setSku(p.getSku());
         res.setImageUrl(p.getImageUrl());
+        res.setActive(p.isActive());
+        res.setCreatedAt(p.getCreatedAt());
 
         res.setCategory(
                 p.getCategory() != null && p.getCategory().isActive()
