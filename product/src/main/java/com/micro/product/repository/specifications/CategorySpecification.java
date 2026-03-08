@@ -3,7 +3,7 @@ package com.micro.product.repository.specifications;
 import com.micro.product.models.Category;
 import org.springframework.data.jpa.domain.Specification;
 
-public class CategorySpecifications {
+public class CategorySpecification {
 
     public static Specification<Category> withFilters(Boolean isActive,String search){
         return Specification.where(hasActiveStatus(isActive))

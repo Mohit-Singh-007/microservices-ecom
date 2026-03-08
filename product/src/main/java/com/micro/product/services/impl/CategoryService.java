@@ -6,7 +6,7 @@ import com.micro.product.exceptions.CategoryAlreadyExists;
 import com.micro.product.exceptions.CategoryNotFoundException;
 import com.micro.product.models.Category;
 import com.micro.product.repository.CategoryRepo;
-import com.micro.product.repository.specifications.CategorySpecifications;
+import com.micro.product.repository.specifications.CategorySpecification;
 import com.micro.product.services.CategoryServiceInterface;
 import com.micro.product.utils.PaginatedResponse;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +67,7 @@ public class CategoryService implements CategoryServiceInterface {
     ) {
 
 
-        Specification<Category> spec = CategorySpecifications.withFilters(isActive,search);
+        Specification<Category> spec = CategorySpecification.withFilters(isActive,search);
 
         Page<Category> c = categoryRepo.findAll(spec, pageable);
 

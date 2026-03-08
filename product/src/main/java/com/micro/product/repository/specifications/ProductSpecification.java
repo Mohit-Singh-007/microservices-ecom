@@ -14,8 +14,7 @@ public class ProductSpecification {
                 .where(hasActiveStatus(isActive))
                 .and(hasKeyWord(search))
                 .and(hasCategory(categoryId))
-                .and(hasPriceRange(minPrice,maxPrice))
-                ;
+                .and(hasPriceRange(minPrice,maxPrice));
     }
 
     private static Specification<Product> hasActiveStatus(Boolean isActive){
