@@ -11,6 +11,7 @@
 ## Services
 - User Service
 - Product Service
+- Cart Service
 - Order Service
 - API Gateway
 - Service Registry (Eureka)
