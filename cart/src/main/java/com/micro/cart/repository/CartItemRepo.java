@@ -13,5 +13,7 @@ public interface CartItemRepo extends JpaRepository<CartItems,Long> {
     Optional<CartItems> findByCartCartIdAndProductId(Long cartId, Long productId);
 
     // delete specific product from a specific cart
+//    @Modifying(clearAutomatically = true) // clears hibernate cache after delete or use flush() in service
+//    @Transactional
     void deleteByCartCartIdAndProductId(Long cartId,Long productId);
 }
