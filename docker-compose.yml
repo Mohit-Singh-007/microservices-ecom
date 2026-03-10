@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
 
     volumes:
-      - keycloak-db-data:/var/lib/postgres/data
+      - keycloak-db-data:/var/lib/postgresql/data
     networks:
       - ecom-network
     healthcheck:

@@ -18,9 +18,9 @@ import java.util.Map;
 public class SecurityConfig {
 
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http){
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
-        return http.csrf(c->c.disable())
+        return http.csrf(c -> c.disable())
                 .authorizeExchange(auth -> auth
 
                         // ADMIN ROUTES
@@ -29,38 +29,35 @@ public class SecurityConfig {
 
                         // PUBLIC ROUTES
                         .pathMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .pathMatchers(HttpMethod.GET,"/api/category/**").permitAll()
-
+                        .pathMatchers(HttpMethod.GET, "/api/category/**").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
                         // REST ROUTES
-                        .anyExchange().authenticated()
-                )
+                        .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(j->j.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                ).build();
+                        .jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .build();
 
     }
 
     // convertor for ROLES -> cauz keycloak sends me nested object that has roles
     @Bean
-    public ReactiveJwtAuthenticationConverter jwtAuthenticationConverter(){
+    public ReactiveJwtAuthenticationConverter jwtAuthenticationConverter() {
         ReactiveJwtAuthenticationConverter converter = new ReactiveJwtAuthenticationConverter();
 
-        converter.setJwtGrantedAuthoritiesConverter(jwt->{
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
 
-            Map<String,Object> realmAccess = jwt.getClaimAsMap("realm_access");
-            if(realmAccess==null || !realmAccess.containsKey("roles")) {
+            Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+            if (realmAccess == null || !realmAccess.containsKey("roles")) {
                 return Flux.empty();
             }
             List<String> roles = (List<String>) realmAccess.get("roles");
             return Flux.fromIterable(roles).map(
-                    role -> new SimpleGrantedAuthority("ROLE_"+role)
-            );
+                    role -> new SimpleGrantedAuthority("ROLE_" + role));
 
         });
 
         return converter;
     }
-
 
 }

@@ -26,7 +26,8 @@ public class ProductController {
 
     private final ProductServiceInterface product;
 
-    @PostMapping
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductRes> createProduct(@Valid @RequestBody ProductReq req){
         ProductRes p = product.createProduct(req);
         return ResponseEntity.ok(p);

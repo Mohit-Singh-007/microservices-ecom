@@ -38,7 +38,13 @@ eureka:
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
 
-
+keycloak:
+  admin:
+    server-url: http://localhost:8180
+    realm: master
+    client-id: admin-cli
+    client-secret: ${CLIENT_SECRET}
+    user-realm: ecom
 
 server:
   port: 8083

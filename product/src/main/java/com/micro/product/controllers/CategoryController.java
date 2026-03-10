@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,7 +25,8 @@ public class CategoryController {
 
     private final CategoryServiceInterface category;
 
-    @PostMapping
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryRes> createCategory(@Valid @RequestBody CategoryReq req){
        CategoryRes c = category.createCategory(req);
        return ResponseEntity.status(HttpStatus.CREATED).body(c);
@@ -44,6 +46,7 @@ public class CategoryController {
     }
 
     @PatchMapping("/admin/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> softDeleteCategoryById(@PathVariable Long id){
         category.toggleCategoryStatus(id);
         return ResponseEntity.noContent().build();
@@ -51,6 +54,7 @@ public class CategoryController {
 
 
     @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PaginatedResponse<CategoryRes>> getCategoriesForAdmin(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
