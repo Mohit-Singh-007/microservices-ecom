@@ -2,6 +2,14 @@ spring:
   application:
     name: gateway
 
+  # keycloak security setup
+  security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: http://localhost:8180/realms/ecom
+
+  #gateway setup
   cloud:
     gateway:
       routes:
@@ -14,7 +22,7 @@ spring:
           predicates:
               - Path=/api/cart,/api/cart/**
 
-
+#eureka client setup
 eureka:
   client:
     serviceUrl:
@@ -28,6 +36,7 @@ eureka:
     instance-id: localhost:${spring.application.name}:${server.port}
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
+
 
 server:
   port: 8080
