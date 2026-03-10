@@ -1,4 +1,4 @@
-package com.micro.product.exceptions;
+package com.micro.cart.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -24,33 +24,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(error);
     }
 
-    @ExceptionHandler(CategoryNotFoundException.class)
-    public ResponseEntity<ApiError> handleCategoryNotFound(
-            CategoryNotFoundException ex, HttpServletRequest req
-    ){
-        ApiError error = new ApiError(
-                404,
-                ex.getMessage(),
-                req.getRequestURI(),
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity.status(404).body(error);
-    }
-
-    @ExceptionHandler(CategoryAlreadyExists.class)
-    public ResponseEntity<ApiError> handleCategoryAlreadyExists(
-            CategoryAlreadyExists ex, HttpServletRequest req
-    ){
-        ApiError error = new ApiError(
-                409,
-                ex.getMessage(),
-                req.getRequestURI(),
-                LocalDateTime.now()
-        );
-
-        return ResponseEntity.status(409).body(error);
-    }
 
     @ExceptionHandler(HandleValidation.class)
     public ResponseEntity<ApiError> handleValidation(

@@ -2,6 +2,12 @@ spring:
   application:
     name: cart
 
+  # keycloak security setup
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/ecom
   datasource:
     url: jdbc:postgresql://localhost:5432/cart
     username: mohit

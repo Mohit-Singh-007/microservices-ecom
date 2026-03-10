@@ -21,6 +21,10 @@ spring:
           uri: lb://CART
           predicates:
               - Path=/api/cart,/api/cart/**
+        - id: user-service
+          uri: lb://USER
+          predicates:
+              - Path=/api/users/**
 
 #eureka client setup
 eureka:

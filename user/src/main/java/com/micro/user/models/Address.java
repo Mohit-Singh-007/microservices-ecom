@@ -8,35 +8,34 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "user_table")
+@Table(name = "address_table")
 @Getter
 @Setter
 @NoArgsConstructor
-public class User {
-
+public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // keycloak id
-    @Column(nullable = false , unique = true)
-    private String keycloakId;
+    @Column(nullable = false)
+    private String street;
 
     @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false,unique = true)
-    private String email;
-
-    private String phone;
-    private String profileImageURL;
+    private String city;
 
     @Column(nullable = false)
-    private boolean isActive=true;
+    private String state;
+
+    @Column(nullable = false)
+    private String pincode;
+
+    @Column(nullable = false)
+    private String country;
+
+    @Column(nullable = false)
+    private boolean isDefault=false;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -46,7 +45,7 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "user" , cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Address> addressList = new ArrayList<>();
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id",nullable = false)
+    private User user;
 }
