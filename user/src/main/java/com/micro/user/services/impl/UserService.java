@@ -8,28 +8,28 @@ import com.micro.user.models.User;
 import com.micro.user.repository.UserRepo;
 import com.micro.user.services.UserServiceInterface;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.ws.rs.core.Response;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.resource.UsersResource;
-import org.keycloak.representations.idm.CredentialRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService implements UserServiceInterface {
 
   private final UserRepo userRepo;
-  private final Keycloak keycloak;
+  private final KeycloakService keycloak;
 
   @Value("${keycloak.admin.user-realm}")
   private String userRealm;
 
   @Override
+  @Transactional
   public UserRes registerUser(RegisterUserReq req) {
 
     // check if email already exists locally
@@ -37,69 +37,58 @@ public class UserService implements UserServiceInterface {
       throw new IllegalStateException("Email already registered...");
     }
 
-    // 1. create user in keycloak
-    UserRepresentation kcUser = new UserRepresentation();
-    kcUser.setUsername(req.getEmail());
-    kcUser.setEmail(req.getEmail());
-    kcUser.setFirstName(req.getName());
-    kcUser.setEnabled(true);
-    kcUser.setEmailVerified(true);
-
-    // set password
-    CredentialRepresentation credential = new CredentialRepresentation();
-    credential.setType(CredentialRepresentation.PASSWORD);
-    credential.setValue(req.getPassword());
-    credential.setTemporary(false);
-    kcUser.setCredentials(List.of(credential));
-
-    // 2. call keycloak admin api
-    UsersResource usersResource = keycloak.realm(userRealm).users();
-    Response response = usersResource.create(kcUser);
-
-    if (response.getStatus() == 409) {
-      throw new IllegalStateException("User already exists in keycloak...");
-    }
-
-    if (response.getStatus() != 201) {
-      throw new RuntimeException("Failed to create user in keycloak: " + response.getStatusInfo());
-    }
-
-    // 3. extract keycloak id from location header
-    String locationHeader = response.getHeaderString("Location");
-    String keycloakId = locationHeader.substring(locationHeader.lastIndexOf("/") + 1);
+    String keycloakId = keycloak.createUser(
+            req.getName(),
+            req.getEmail(),
+            req.getPassword()
+    );
 
     // 4. save user locally
-    User user = new User();
-    user.setKeycloakId(keycloakId);
-    user.setName(req.getName());
-    user.setEmail(req.getEmail());
-    userRepo.save(user);
+   try{
+     User user = new User();
+     user.setKeycloakId(keycloakId);
+     user.setName(req.getName());
+     user.setEmail(req.getEmail());
+     user.setPhone(req.getPhone());
+     User saved = userRepo.save(user);
+     return mapToUserRes(saved);
 
-    return mapToUserRes(user);
+   }catch (Exception e){
+     log.error("DB save failed, rolling back keycloak user {}",keycloakId);
+     throw new RuntimeException("Failed to register...");
+   }
   }
 
+  // get or create from JWT
+  @Transactional
+  public User getOrCreateUser(Jwt jwt){
+    String keycloakId = jwt.getSubject();
+
+    return userRepo.findByKeycloakId(keycloakId)
+            .orElseGet(()->{
+              User user = new User();
+              user.setKeycloakId(keycloakId);
+              user.setName(jwt.getClaimAsString("name") != null
+                            ? jwt.getClaimAsString("name")
+                            : jwt.getClaimAsString("preferred_username")
+              );
+              user.setEmail(jwt.getClaimAsString("email"));
+              return userRepo.save(user);
+            });
+  }
+
+
   @Override
-  public UserRes getUserProfile(String keycloakId) {
-    User user = userRepo.findByKeycloakId(keycloakId)
-        .orElseThrow(() -> new EntityNotFoundException("User not found..."));
-    return mapToUserRes(user);
+  @Transactional
+  public UserRes getUserProfile(Jwt jwt) {
+    return mapToUserRes(getOrCreateUser(jwt));
   }
 
   @Override
   public UserRes updateUserProfile(String keycloakId, UpdateUserReq req) {
-    User user = userRepo.findByKeycloakId(keycloakId)
-        .orElseThrow(() -> new EntityNotFoundException("User not found..."));
-
-    if (req.getName() != null)
-      user.setName(req.getName());
-    if (req.getPhone() != null)
-      user.setPhone(req.getPhone());
-    if (req.getProfileImageURL() != null)
-      user.setProfileImageURL(req.getProfileImageURL());
-
-    userRepo.save(user);
-    return mapToUserRes(user);
+    return null;
   }
+
 
   private UserRes mapToUserRes(User user) {
     UserRes res = new UserRes();

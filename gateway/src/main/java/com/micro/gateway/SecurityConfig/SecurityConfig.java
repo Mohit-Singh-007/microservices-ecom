@@ -23,6 +23,10 @@ public class SecurityConfig {
         return http.csrf(c -> c.disable())
                 .authorizeExchange(auth -> auth
 
+                        // USER ROUTES
+                        .pathMatchers(HttpMethod.POST,"/api/users/register").permitAll()
+                        .pathMatchers(HttpMethod.POST,"/api/users/login").permitAll()
+
                         // ADMIN ROUTES
                         .pathMatchers("/api/products/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/category/admin/**").hasRole("ADMIN")
@@ -30,7 +34,6 @@ public class SecurityConfig {
                         // PUBLIC ROUTES
                         .pathMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/category/**").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
                         // REST ROUTES
                         .anyExchange().authenticated())

@@ -41,8 +41,8 @@ eureka:
 keycloak:
   admin:
     server-url: http://localhost:8180
-    realm: master
-    client-id: admin-cli
+    realm: ecom
+    client-id: ecom-client
     client-secret: ${CLIENT_SECRET}
     user-realm: ecom
 

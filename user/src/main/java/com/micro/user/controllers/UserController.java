@@ -31,8 +31,7 @@ public class UserController {
   @GetMapping("/me")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<UserRes> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
-    String keycloakId = jwt.getSubject();
-    UserRes res = userService.getUserProfile(keycloakId);
+    UserRes res = userService.getUserProfile(jwt);
     return ResponseEntity.ok(res);
   }
 

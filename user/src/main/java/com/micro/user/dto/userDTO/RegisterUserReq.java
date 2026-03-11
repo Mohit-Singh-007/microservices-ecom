@@ -18,4 +18,8 @@ public class RegisterUserReq {
   @NotBlank(message = "password is required...")
   @Size(min = 6, message = "password must be at least 6 characters...")
   private String password;
+
+  @NotBlank(message = "phone num is required...")
+  @Size(min = 10, message = "number must be at least 10 characters...")
+  private String phone;
 }
