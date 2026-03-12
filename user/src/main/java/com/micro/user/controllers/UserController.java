@@ -20,14 +20,14 @@ public class UserController {
 
   private final UserServiceInterface userService;
 
-  // public - no auth needed
+
   @PostMapping("/register")
   public ResponseEntity<UserRes> register(@Valid @RequestBody RegisterUserReq req) {
     UserRes res = userService.registerUser(req);
     return ResponseEntity.status(HttpStatus.CREATED).body(res);
   }
 
-  // authenticated - gets profile using keycloakId from JWT
+  // gets profile using keycloakId from JWT
   @GetMapping("/me")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<UserRes> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
@@ -35,13 +35,12 @@ public class UserController {
     return ResponseEntity.ok(res);
   }
 
-  // authenticated - update own profile
+
   @PatchMapping("/me")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<UserRes> updateMyProfile(@AuthenticationPrincipal Jwt jwt,
       @Valid @RequestBody UpdateUserReq req) {
-    String keycloakId = jwt.getSubject();
-    UserRes res = userService.updateUserProfile(keycloakId, req);
+    UserRes res = userService.updateUserProfile(jwt, req);
     return ResponseEntity.ok(res);
   }
 }
