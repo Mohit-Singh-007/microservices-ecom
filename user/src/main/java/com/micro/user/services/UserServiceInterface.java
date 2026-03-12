@@ -10,5 +10,5 @@ public interface UserServiceInterface {
 
   UserRes getUserProfile(Jwt jwt);
 
-  UserRes updateUserProfile(String keycloakId, UpdateUserReq req);
+  UserRes updateUserProfile(Jwt jwt, UpdateUserReq req);
 }

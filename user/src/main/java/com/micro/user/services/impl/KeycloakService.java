@@ -1,5 +1,9 @@
 package com.micro.user.services.impl;
 
+import com.micro.user.exceptions.EmailAlreadyExistsException;
+import com.micro.user.exceptions.KeycloakRoleAssignmentException;
+import com.micro.user.exceptions.KeycloakRollbackFailureException;
+import com.micro.user.exceptions.KeycloakUserCreationException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +31,7 @@ public class KeycloakService {
                 .users().searchByEmail(email, true);
 
         if (!existing.isEmpty()) {
-            throw new IllegalStateException("Email already exists...");
+            throw new EmailAlreadyExistsException(email);
         }
 
         // password
@@ -46,13 +50,12 @@ public class KeycloakService {
         user.setCredentials(List.of(credential));
 
         // create
-
         Response res = keycloak.realm(realm).users().create(user);
         if (res.getStatus() != 201) {
-            throw new RuntimeException("User creation failed...");
+            throw new KeycloakUserCreationException(email, res.getStatus());
         }
 
-        // extract ID , assign Role
+        // extract ID, assign Role
         String location = res.getHeaderString("Location");
         String keycloakId = location.substring(location.lastIndexOf("/") + 1);
 
@@ -62,12 +65,22 @@ public class KeycloakService {
                     .roles().realmLevel().add(List.of(role));
             log.info("Keycloak user created and role assigned: {}", keycloakId);
         } catch (Exception e) {
-            log.error("User created in Keycloak but failed to assign 'USER' role for user {}. Error: {}", keycloakId,
-                    e.getMessage());
-            throw new RuntimeException("Failed to assign user role in Keycloak. Please check client permissions.", e);
+            log.error("Role assignment failed, rolling back keycloak user {}", keycloakId);
+            try {
+                keycloak.realm(realm).users().delete(keycloakId);
+                log.info("Keycloak user {} rolled back successfully", keycloakId);
+            } catch (Exception rollbackEx) {
+                log.error("CRITICAL: Keycloak rollback failed for {}. Manual cleanup needed.", keycloakId, rollbackEx);
+                throw new KeycloakRollbackFailureException(keycloakId, rollbackEx);
+            }
+            throw new KeycloakRoleAssignmentException(keycloakId, e);
         }
 
         return keycloakId;
+    }
 
+    public void deleteUser(String keycloakId) {
+        keycloak.realm(realm).users().delete(keycloakId);
+        log.info("Keycloak user '{}' deleted (rollback)", keycloakId);
     }
 }

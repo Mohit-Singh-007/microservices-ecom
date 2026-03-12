@@ -4,10 +4,12 @@ import com.micro.user.dto.addressDTO.AddressRes;
 import com.micro.user.dto.userDTO.RegisterUserReq;
 import com.micro.user.dto.userDTO.UpdateUserReq;
 import com.micro.user.dto.userDTO.UserRes;
+import com.micro.user.exceptions.EmailAlreadyExistsException;
+import com.micro.user.exceptions.KeycloakRollbackFailureException;
+import com.micro.user.exceptions.UserRegistrationException;
 import com.micro.user.models.User;
 import com.micro.user.repository.UserRepo;
 import com.micro.user.services.UserServiceInterface;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,16 +27,13 @@ public class UserService implements UserServiceInterface {
   private final UserRepo userRepo;
   private final KeycloakService keycloak;
 
-  @Value("${keycloak.admin.user-realm}")
-  private String userRealm;
-
   @Override
   @Transactional
   public UserRes registerUser(RegisterUserReq req) {
 
     // check if email already exists locally
     if (userRepo.findByEmail(req.getEmail()).isPresent()) {
-      throw new IllegalStateException("Email already registered...");
+      throw new EmailAlreadyExistsException(req.getEmail());
     }
 
     String keycloakId = keycloak.createUser(
@@ -43,40 +42,46 @@ public class UserService implements UserServiceInterface {
             req.getPassword()
     );
 
-    // 4. save user locally
-   try{
-     User user = new User();
-     user.setKeycloakId(keycloakId);
-     user.setName(req.getName());
-     user.setEmail(req.getEmail());
-     user.setPhone(req.getPhone());
-     User saved = userRepo.save(user);
-     return mapToUserRes(saved);
+    // save user locally
+    try {
+      User user = new User();
+      user.setKeycloakId(keycloakId);
+      user.setName(req.getName());
+      user.setEmail(req.getEmail());
+      user.setPhone(req.getPhone());
+      User saved = userRepo.save(user);
+      return mapToUserRes(saved);
 
-   }catch (Exception e){
-     log.error("DB save failed, rolling back keycloak user {}",keycloakId);
-     throw new RuntimeException("Failed to register...");
-   }
+    } catch (Exception e) {
+      log.error("DB save failed, rolling back keycloak user {}", keycloakId);
+      try {
+        keycloak.deleteUser(keycloakId);
+        log.info("Keycloak user {} rolled back successfully", keycloakId);
+      } catch (Exception rollbackEx) {
+        log.error("CRITICAL: Keycloak rollback failed for {}. Manual cleanup needed.", keycloakId, rollbackEx);
+        throw new KeycloakRollbackFailureException(keycloakId, rollbackEx);
+      }
+      throw new UserRegistrationException("DB save failed; Keycloak user was rolled back", e);
+    }
   }
 
   // get or create from JWT
   @Transactional
-  public User getOrCreateUser(Jwt jwt){
+  public User getOrCreateUser(Jwt jwt) {
     String keycloakId = jwt.getSubject();
 
     return userRepo.findByKeycloakId(keycloakId)
-            .orElseGet(()->{
+            .orElseGet(() -> {
               User user = new User();
               user.setKeycloakId(keycloakId);
               user.setName(jwt.getClaimAsString("name") != null
-                            ? jwt.getClaimAsString("name")
-                            : jwt.getClaimAsString("preferred_username")
+                      ? jwt.getClaimAsString("name")
+                      : jwt.getClaimAsString("preferred_username")
               );
               user.setEmail(jwt.getClaimAsString("email"));
               return userRepo.save(user);
             });
   }
-
 
   @Override
   @Transactional
@@ -85,10 +90,22 @@ public class UserService implements UserServiceInterface {
   }
 
   @Override
-  public UserRes updateUserProfile(String keycloakId, UpdateUserReq req) {
-    return null;
-  }
+  @Transactional
+  public UserRes updateUserProfile(Jwt jwt, UpdateUserReq req) {
 
+    // user hai ya ni
+    User user = getOrCreateUser(jwt);
+    if(req.getName() != null){
+      user.setName(req.getName());
+    }
+    if(req.getPhone() != null){
+      user.setPhone(req.getPhone());
+    }
+    if(req.getProfileImageURL() != null){
+      user.setProfileImageURL(req.getProfileImageURL());
+    }
+    return mapToUserRes(userRepo.save(user));
+  }
 
   private UserRes mapToUserRes(User user) {
     UserRes res = new UserRes();

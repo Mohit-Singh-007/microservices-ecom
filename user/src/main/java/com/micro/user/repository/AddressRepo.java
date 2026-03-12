@@ -2,6 +2,9 @@ package com.micro.user.repository;
 
 import com.micro.user.models.Address;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,5 +19,8 @@ public interface AddressRepo extends JpaRepository<Address,Long> {
     // default address
     Optional<Address> findByUserIdAndIsDefaultTrue(Long userId);
 
+    @Modifying
+    @Query("UPDATE Address a SET a.isDefault = false WHERE a.user.id = :userId")
+    void clearDefaultByUserId(@Param("userId") Long userId);
 
 }
