@@ -14,6 +14,7 @@ import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,16 +29,22 @@ public class CartService implements CartServiceInterface {
     private final CartItemRepo cartItemRepo;
 
     // later get it using userId -> get a specific cart of a user[userId]
-    private Cart getOrCreateCart(){
-        return cartRepo.findAll()
-                .stream().findFirst()
-                .orElseGet(() -> cartRepo.save(new Cart()));
+    private Cart getOrCreateCart(String keycloakId){
+        return cartRepo.findByKeycloakId(keycloakId)
+                .orElseGet(() -> {
+                    Cart cart = new Cart();
+                    cart.setKeycloakId(keycloakId);
+                    return cartRepo.save(cart);
+                });
     }
 
 
     @Override
     @Transactional
-    public CartRes addToCart(AddToCartReq req) {
+    public CartRes addToCart(Jwt jwt ,AddToCartReq req) {
+
+        // user id extract
+        String keycloakId = jwt.getSubject();
 
         // 1. validate product via FeignClient
         ProductRes product;
@@ -49,7 +56,7 @@ public class CartService implements CartServiceInterface {
 
 
         // 2. get or create cart of the user later[userId]
-        Cart cart = getOrCreateCart();
+        Cart cart = getOrCreateCart(keycloakId);
 
         // 3. if product/item in cart -> increase quantity
        Optional<CartItems> existingItem = cartItemRepo.findByCartCartIdAndProductId(cart.getCartId(), req.getProductId());
@@ -72,6 +79,60 @@ public class CartService implements CartServiceInterface {
 
         return mapToCartRes(cart.getCartId());
     }
+
+
+    @Override
+    @Transactional
+    public CartRes updateQuantity(Jwt jwt , Long productId , int quantity) {
+
+        // extract id from jwt
+        String keycloakId = jwt.getSubject();
+
+
+        // get the cart
+        Cart cart = getOrCreateCart(keycloakId);
+
+        // check if product/item is in cart
+        CartItems item = cartItemRepo.findByCartCartIdAndProductId(cart.getCartId(), productId)
+                .orElseThrow(()-> new EntityNotFoundException("Product not in cart: "+productId));
+
+
+        // quantity less than 0 -> remove item
+        if(quantity <= 0){
+            cartItemRepo.delete(item);
+        }else{
+            item.setQuantity(quantity);
+            cartItemRepo.save(item);
+        }
+
+        return mapToCartRes(cart.getCartId());
+    }
+
+    @Override
+    @Transactional
+    public CartRes removeItem(Jwt jwt , Long productId) {
+        // extract id
+        String keycloakId = jwt.getSubject();
+       Cart cart = getOrCreateCart(keycloakId);
+       cartItemRepo.deleteByCartCartIdAndProductId(cart.getCartId(), productId);
+       cartItemRepo.flush();
+       return mapToCartRes(cart.getCartId());
+    }
+
+    @Override
+    @Transactional
+    public CartRes getCart(Jwt jwt) {
+        Cart cart = getOrCreateCart(jwt.getSubject());
+        return mapToCartRes(cart.getCartId());
+    }
+
+    @Override
+    public void clearCart(Jwt jwt) {
+        Cart cart = getOrCreateCart(jwt.getSubject());
+        cart.getItems().clear();
+        cartRepo.save(cart);
+    }
+
 
     // cart find kro -> uske items ko map kro[CartItemRes] -> total calc
     // -> CartRes se map krdo
@@ -108,45 +169,6 @@ public class CartService implements CartServiceInterface {
         return res;
     }
 
-
-    @Override
-    @Transactional
-    public CartRes updateQuantity(Long productId , int quantity) {
-        // get the cart
-        Cart cart = getOrCreateCart();
-
-        // check if product/item is in cart
-        CartItems item = cartItemRepo.findByCartCartIdAndProductId(cart.getCartId(), productId)
-                .orElseThrow(()-> new EntityNotFoundException("Product not in cart: "+productId));
-
-        item.setQuantity(quantity);
-        cartItemRepo.save(item);
-
-        return mapToCartRes(cart.getCartId());
-    }
-
-    @Override
-    @Transactional
-    public CartRes removeItem(Long productId) {
-       Cart cart = getOrCreateCart();
-       cartItemRepo.deleteByCartCartIdAndProductId(cart.getCartId(), productId);
-       cartItemRepo.flush();
-       return mapToCartRes(cart.getCartId());
-    }
-
-    @Override
-    @Transactional
-    public CartRes getCart() {
-        Cart cart = getOrCreateCart();
-        return mapToCartRes(cart.getCartId());
-    }
-
-    @Override
-    public void clearCart() {
-        Cart cart = getOrCreateCart();
-        cart.getItems().clear();
-        cartRepo.save(cart);
-    }
 
 
 }

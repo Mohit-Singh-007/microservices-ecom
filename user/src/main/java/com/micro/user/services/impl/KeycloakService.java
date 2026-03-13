@@ -42,10 +42,12 @@ public class KeycloakService {
 
         // user
         UserRepresentation user = new UserRepresentation();
-        user.setEnabled(true);
+        String[] parts = name.trim().split(" ", 2);
+        user.setFirstName(parts[0]);
+        user.setLastName(parts.length > 1 ? parts[1] : "");
         user.setEmail(email);
         user.setUsername(email);
-        user.setFirstName(name);
+        user.setEnabled(true);
         user.setEmailVerified(true);
         user.setCredentials(List.of(credential));
 

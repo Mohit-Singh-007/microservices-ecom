@@ -22,10 +22,16 @@ public class CartItems {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartItemId;
 
+    @Column(nullable = false)
     private Long productId;
+
+    @Column(nullable = false)
     private String productName;
+
+    @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
     private int quantity;
 
     @ManyToOne(fetch = FetchType.LAZY)

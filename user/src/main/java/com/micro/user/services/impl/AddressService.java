@@ -46,7 +46,7 @@ public class AddressService implements AddressServiceInterface {
         address.setPincode(req.getPincode());
         address.setCountry(req.getCountry());
 
-        return mapToAddressRes(address);
+        return mapToAddressRes(addressRepo.saveAndFlush(address));
     }
 
     @Override
@@ -68,7 +68,7 @@ public class AddressService implements AddressServiceInterface {
         addressRepo.clearDefaultByUserId(user.getId());
         address.setDefault(true);
 
-        return mapToAddressRes(addressRepo.save(address));
+        return mapToAddressRes(addressRepo.saveAndFlush(address));
     }
 
 
@@ -84,7 +84,7 @@ public class AddressService implements AddressServiceInterface {
         address.setCountry(req.getCountry());
         address.setPincode(req.getPincode());
 
-        return mapToAddressRes(addressRepo.save(address));
+        return mapToAddressRes(addressRepo.saveAndFlush(address));
 
     }
 

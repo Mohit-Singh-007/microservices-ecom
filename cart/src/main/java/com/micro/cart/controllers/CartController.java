@@ -7,44 +7,46 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class CartController {
     private final CartServiceInterface cartServiceInterface;
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CartRes> getCart(){
-        return ResponseEntity.ok(cartServiceInterface.getCart());
+    public ResponseEntity<CartRes> getCart(@AuthenticationPrincipal Jwt jwt){
+        return ResponseEntity.ok(cartServiceInterface.getCart(jwt));
     }
 
     @PostMapping("/items")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CartRes> addToCart(@Valid @RequestBody AddToCartReq req){
-        return ResponseEntity.ok(cartServiceInterface.addToCart(req));
+    public ResponseEntity<CartRes> addToCart(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AddToCartReq req){
+        return ResponseEntity.ok(cartServiceInterface.addToCart(jwt,req));
     }
 
     @PatchMapping("/items/{productId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CartRes> updateQuantity(@PathVariable Long productId,
-                                                  @RequestParam int quantity
-                                                  ){
-        return ResponseEntity.ok(cartServiceInterface.updateQuantity(productId, quantity));
+    public ResponseEntity<CartRes> updateQuantity(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long productId,
+            @RequestParam int quantity
+    ){
+        return ResponseEntity.ok(cartServiceInterface.updateQuantity(jwt,productId, quantity));
     }
 
     @DeleteMapping("/items/{productId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<CartRes> deleteItem(@PathVariable Long productId){
-        return ResponseEntity.ok(cartServiceInterface.removeItem(productId));
+    public ResponseEntity<CartRes> deleteItem(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long productId){
+        return ResponseEntity.ok(cartServiceInterface.removeItem(jwt,productId));
     }
 
     @DeleteMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> clearCart(){
-        cartServiceInterface.clearCart();
+    public ResponseEntity<Void> clearCart(@AuthenticationPrincipal Jwt jwt){
+        cartServiceInterface.clearCart(jwt);
         return ResponseEntity.noContent().build();
     }
 }

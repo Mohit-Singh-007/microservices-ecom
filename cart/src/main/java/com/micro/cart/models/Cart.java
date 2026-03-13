@@ -24,9 +24,15 @@ public class Cart {
     private Long cartId;
 
     // add user-id here later when auth is done
+    @Column(nullable = false, unique = true)
+    private String keycloakId;
 
     @OneToMany(mappedBy = "cart" , cascade = CascadeType.ALL , orphanRemoval = true)
     private List<CartItems> items = new ArrayList<>();
 
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
