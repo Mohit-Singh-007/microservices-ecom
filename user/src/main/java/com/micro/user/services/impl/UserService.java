@@ -13,6 +13,7 @@ import com.micro.user.services.UserServiceInterface;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.keycloak.jose.jwk.JWK;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -81,6 +82,15 @@ public class UserService implements UserServiceInterface {
               user.setEmail(jwt.getClaimAsString("email"));
               return userRepo.save(user);
             });
+  }
+
+  @Override
+  @Transactional
+  public void deactivateUser(Jwt jwt){
+    User user = getOrCreateUser(jwt);
+    user.setActive(false);
+    userRepo.save(user);
+    log.info("User {} deactivated",user.getName());
   }
 
   @Override

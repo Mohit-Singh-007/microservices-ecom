@@ -11,4 +11,5 @@ public interface UserServiceInterface {
   UserRes getUserProfile(Jwt jwt);
 
   UserRes updateUserProfile(Jwt jwt, UpdateUserReq req);
+  void deactivateUser(Jwt jwt);
 }

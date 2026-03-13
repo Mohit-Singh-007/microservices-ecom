@@ -43,4 +43,12 @@ public class UserController {
     UserRes res = userService.updateUserProfile(jwt, req);
     return ResponseEntity.ok(res);
   }
+
+  @DeleteMapping("/me")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<Void> deactivateAccount(@AuthenticationPrincipal Jwt jwt){
+    userService.deactivateUser(jwt);
+    return ResponseEntity.noContent().build();
+  }
+
 }

@@ -7,9 +7,9 @@ import com.micro.user.exceptions.AddressOwnershipException;
 import com.micro.user.models.Address;
 import com.micro.user.models.User;
 import com.micro.user.repository.AddressRepo;
+import com.micro.user.services.AddressServiceInterface;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.keycloak.jose.jwk.JWK;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -17,13 +17,13 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class AddressService {
+public class AddressService implements AddressServiceInterface {
 
 
     private final UserService userService;
     private final AddressRepo addressRepo;
 
-
+    @Override
     public List<AddressRes> getAllAddresses(Jwt jwt){
         User user = userService.getOrCreateUser(jwt);
 
@@ -32,6 +32,8 @@ public class AddressService {
 
     }
 
+    @Override
+    @Transactional
     public AddressRes addAddress(Jwt jwt,AddressReq req){
         // user hona chahiye to add
         User user = userService.getOrCreateUser(jwt);
@@ -47,6 +49,7 @@ public class AddressService {
         return mapToAddressRes(address);
     }
 
+    @Override
     @Transactional
     public void deleteAddress(Jwt jwt , Long addressId){
         User user = userService.getOrCreateUser(jwt);
@@ -56,6 +59,7 @@ public class AddressService {
         addressRepo.delete(address);
     }
 
+    @Override
     @Transactional
     public AddressRes setDefaultAddress(Jwt jwt , Long addressId){
         User user = userService.getOrCreateUser(jwt);
@@ -68,6 +72,7 @@ public class AddressService {
     }
 
 
+    @Override
     @Transactional
     public AddressRes updateAddress(Jwt jwt , Long addressId,AddressReq req){
         User user = userService.getOrCreateUser(jwt);
