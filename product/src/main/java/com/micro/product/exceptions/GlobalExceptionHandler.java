@@ -1,6 +1,7 @@
 package com.micro.product.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -89,6 +90,19 @@ public class GlobalExceptionHandler {
     );
         return ResponseEntity.status(500).body(error);
 
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleStock(
+            Exception ex , HttpServletRequest req
+    ){
+        ApiError error = new ApiError(
+               409,
+                "Insufficient stock",
+                req.getRequestURI(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(409).body(error);
     }
 
 

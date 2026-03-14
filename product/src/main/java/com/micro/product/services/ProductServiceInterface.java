@@ -19,4 +19,5 @@ public interface ProductServiceInterface {
             BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 
     void toggleProductStatus(Long productId);
+    void deductStock(Long productId , int quantity);
 }

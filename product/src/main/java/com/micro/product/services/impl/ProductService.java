@@ -3,6 +3,7 @@ package com.micro.product.services.impl;
 import com.micro.product.dto.productDTO.ProductReq;
 import com.micro.product.dto.productDTO.ProductRes;
 import com.micro.product.exceptions.CategoryNotFoundException;
+import com.micro.product.exceptions.InsufficientStockException;
 import com.micro.product.exceptions.ProductNotFoundException;
 import com.micro.product.models.Category;
 import com.micro.product.models.Product;
@@ -11,6 +12,7 @@ import com.micro.product.repository.ProductRepo;
 import com.micro.product.repository.specifications.ProductSpecification;
 import com.micro.product.services.ProductServiceInterface;
 import com.micro.product.utils.PaginatedResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +39,7 @@ public class ProductService implements ProductServiceInterface {
         p.setPrice(req.getPrice());
         p.setBrand(req.getBrand());
         p.setImageUrl(req.getImageUrl());
+        p.setStock(req.getStock());
 
         // set sku
         String sku = "SKU-" + UUID.randomUUID().toString().substring(0,8);
@@ -97,6 +100,23 @@ public class ProductService implements ProductServiceInterface {
     }
 
 
+    @Override
+    @Transactional
+    public void deductStock(Long productId, int s){
+        Product p = productRepo.findById(productId)
+                .orElseThrow(()->new ProductNotFoundException("Product with id "+productId+" does not exist..."));
+
+        int updatedStock = p.getStock() - s;
+
+        // -ve -> restore stock[on order cancel]
+        if(updatedStock < 0){
+            throw new InsufficientStockException("Out of stock...");
+        }
+        p.setStock(updatedStock);
+        productRepo.save(p);
+
+    }
+
 
     ProductRes mapToProductRes(Product p){
         ProductRes res = new ProductRes();
@@ -109,6 +129,7 @@ public class ProductService implements ProductServiceInterface {
         res.setImageUrl(p.getImageUrl());
         res.setActive(p.isActive());
         res.setCreatedAt(p.getCreatedAt());
+        res.setStock(p.getStock());
 
         res.setCategory(
                 p.getCategory() != null && p.getCategory().isActive()

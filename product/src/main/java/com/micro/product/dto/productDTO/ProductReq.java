@@ -25,4 +25,7 @@ public class ProductReq {
     private String brand;
 
     private String imageUrl;
+
+    @Min(0)
+    private int stock;
 }

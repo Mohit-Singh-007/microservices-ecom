@@ -1,6 +1,7 @@
 package com.micro.product.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
@@ -53,5 +54,9 @@ public class Product {
 
     @Column(nullable = false)
     private boolean isActive=true;
+
+    @Column(nullable = false)
+    @Min(1)
+    private int stock=0;
 
 }

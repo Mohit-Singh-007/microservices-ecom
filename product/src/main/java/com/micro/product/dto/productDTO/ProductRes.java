@@ -17,4 +17,5 @@ public class ProductRes {
         private String imageUrl;
         private boolean isActive;
         private LocalDateTime createdAt;
+        private int stock;
     }
