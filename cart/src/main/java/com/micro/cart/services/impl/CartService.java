@@ -121,7 +121,7 @@ public class CartService implements CartServiceInterface {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CartRes getCart(Jwt jwt) {
         Cart cart = getOrCreateCart(jwt.getSubject());
         return mapToCartRes(cart.getCartId());

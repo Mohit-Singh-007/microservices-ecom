@@ -9,7 +9,7 @@ spring:
         jwt:
           issuer-uri: http://localhost:8180/realms/ecom
   datasource:
-    url: jdbc:postgresql://localhost:5432/cart
+    url: jdbc:postgresql://localhost:5432/orderdb
     username: mohit
     password: mohit123
 

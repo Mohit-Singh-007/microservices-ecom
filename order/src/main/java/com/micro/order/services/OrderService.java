@@ -14,7 +14,7 @@ import com.micro.order.exceptions.EmptyCartException;
 import com.micro.order.exceptions.InsufficientStockException;
 import com.micro.order.exceptions.Invalidstatustransitionexception;
 import com.micro.order.exceptions.OrderNotFoundException;
-import com.micro.order.models.Order;
+import com.micro.order.models.CustomerOrder;
 import com.micro.order.models.OrderItems;
 import com.micro.order.repository.OrderRepo;
 import lombok.RequiredArgsConstructor;
@@ -63,12 +63,12 @@ public class OrderService implements OrderServiceInterface{
                 throw new InsufficientStockException("Out of stock...");
             }
 
-            productClient.deductStock(i.getProductId(), i.getQuantity());
+            productClient.deductStock(i.getProductId(), i.getQuantity(),token);
         }
 
         // order create krle
-        Order order = new Order();
-        order.setKeycloakId(keycloakId);
+        CustomerOrder order = new CustomerOrder();
+        order.setUserId(keycloakId);
         order.setOrderStatus(OrderStatus.PENDING);
         order.setStreet(req.getStreet());
         order.setCity(req.getCity());
@@ -91,7 +91,7 @@ public class OrderService implements OrderServiceInterface{
 
         order.setItems(orderItems);
         order.setTotalAmount(cart.getTotal());
-        Order saved = orderRepo.save(order);
+        CustomerOrder saved = orderRepo.save(order);
         log.info("Order {} placed for user {}", saved.getOrderId(), keycloakId);
 
         cartClient.clearCart(token);
@@ -105,7 +105,7 @@ public class OrderService implements OrderServiceInterface{
     @Transactional(readOnly = true)
     public List<OrderRes> getAllOrders(Jwt jwt) {
         String keycloakId = jwt.getSubject();
-        return orderRepo.findByKeycloakIdAndOrderByCreatedAtDesc(keycloakId)
+        return orderRepo.findByUserIdOrderByCreatedAtDesc(keycloakId)
                 .stream()
                 .map(this::mapToOrderRes)
                 .toList();
@@ -117,7 +117,7 @@ public class OrderService implements OrderServiceInterface{
     @Transactional(readOnly = true)
     public OrderRes getOrderById(Jwt jwt, Long orderId) {
         String keycloakId = jwt.getSubject();
-        Order order = orderRepo.findByOrderIdAndKeycloakId(orderId, keycloakId)
+        CustomerOrder order = orderRepo.findByOrderIdAndUserId(orderId, keycloakId)
                 .orElseThrow(() -> new OrderNotFoundException("Order with id: "+orderId+" not found..."));
         return mapToOrderRes(order);
     }
@@ -127,7 +127,8 @@ public class OrderService implements OrderServiceInterface{
     @Transactional
     public OrderRes cancelOrder(Jwt jwt , Long orderId){
         String keycloakId = jwt.getSubject();
-        Order order = orderRepo.findByOrderIdAndKeycloakId(orderId,keycloakId)
+    String token = "Bearer " + jwt.getTokenValue();
+        CustomerOrder order = orderRepo.findByOrderIdAndUserId(orderId,keycloakId)
                 .orElseThrow(()->new OrderNotFoundException("Order with id: "+orderId+" does not exist..."));
 
 
@@ -135,7 +136,7 @@ public class OrderService implements OrderServiceInterface{
 
         // restock krr
         order.getItems().forEach(i ->
-                productClient.deductStock(i.getProductId(), -i.getQuantity())
+                productClient.deductStock(i.getProductId(), -i.getQuantity(),token)
                 );
 
         order.setOrderStatus(OrderStatus.CANCELLED);
@@ -148,7 +149,7 @@ public class OrderService implements OrderServiceInterface{
     // update order status - ADMIN
     @Override
     public OrderRes updateOrderStatus(Long orderId , UpdateOrderStatusReq req){
-        Order order = orderRepo.findById(orderId)
+        CustomerOrder order = orderRepo.findById(orderId)
                 .orElseThrow(()->new OrderNotFoundException("Order not found..."));
 
         validateTransition(order.getOrderStatus() , req.getStatus());
@@ -166,7 +167,7 @@ public class OrderService implements OrderServiceInterface{
     }
 
 
-    private OrderRes mapToOrderRes(Order order) {
+    private OrderRes mapToOrderRes(CustomerOrder order) {
         OrderRes res = new OrderRes();
         res.setOrderId(order.getOrderId());
         res.setStatus(order.getOrderStatus());

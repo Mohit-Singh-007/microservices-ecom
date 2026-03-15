@@ -88,8 +88,8 @@ public class ProductController {
     // to be called by order-service
     // /id/stock?quantity=X
     @PutMapping("/{id}/stock")
-    public ResponseEntity<Void> deductStock(@PathVariable Long productId ,@RequestParam int quantity){
-        product.deductStock(productId,quantity);
+    public ResponseEntity<Void> deductStock(@PathVariable Long id ,@RequestParam int quantity){
+        product.deductStock(id,quantity);
         return ResponseEntity.noContent().build();
     }
 

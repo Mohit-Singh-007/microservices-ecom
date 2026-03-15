@@ -38,6 +38,9 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
 
+                                                // background req
+                                                .requestMatchers(HttpMethod.PUT, "/api/products/*/stock").permitAll()
+
                                                 .anyRequest().authenticated())
                                 .oauth2ResourceServer(oauth2 -> oauth2
                                                 .jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter())))
