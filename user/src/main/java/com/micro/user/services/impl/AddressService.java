@@ -8,10 +8,10 @@ import com.micro.user.models.Address;
 import com.micro.user.models.User;
 import com.micro.user.repository.AddressRepo;
 import com.micro.user.services.AddressServiceInterface;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 

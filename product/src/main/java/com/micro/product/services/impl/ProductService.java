@@ -12,12 +12,12 @@ import com.micro.product.repository.ProductRepo;
 import com.micro.product.repository.specifications.ProductSpecification;
 import com.micro.product.services.ProductServiceInterface;
 import com.micro.product.utils.PaginatedResponse;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,6 +31,7 @@ public class ProductService implements ProductServiceInterface {
     private final ProductRepo productRepo;
 
     @Override
+    @Transactional
     public ProductRes createProduct(ProductReq req) {
 
         Product p = new Product();

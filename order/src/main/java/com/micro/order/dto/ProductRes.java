@@ -15,4 +15,5 @@ public class ProductRes {
     private String brand;
     private String imageUrl;
     private boolean isActive;
+    private int stock;
 }

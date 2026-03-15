@@ -16,11 +16,11 @@ public class OrderItems {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long orderItemId;
 
     // reference of product
     @Column(nullable = false)
-    private String productId;
+    private Long productId;
 
     @Column(nullable = false)
     private String productName;

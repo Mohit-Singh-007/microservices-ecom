@@ -10,14 +10,11 @@ import com.micro.user.exceptions.UserRegistrationException;
 import com.micro.user.models.User;
 import com.micro.user.repository.UserRepo;
 import com.micro.user.services.UserServiceInterface;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.jose.jwk.JWK;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service

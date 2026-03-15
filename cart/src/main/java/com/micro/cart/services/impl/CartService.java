@@ -12,10 +12,11 @@ import com.micro.cart.repository.CartRepo;
 import com.micro.cart.services.CartServiceInterface;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -120,7 +121,7 @@ public class CartService implements CartServiceInterface {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public CartRes getCart(Jwt jwt) {
         Cart cart = getOrCreateCart(jwt.getSubject());
         return mapToCartRes(cart.getCartId());
