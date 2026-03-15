@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/products/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/category/admin/**").hasRole("ADMIN")
 
+
                         // PUBLIC ROUTES
                         .pathMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/category/**").permitAll()

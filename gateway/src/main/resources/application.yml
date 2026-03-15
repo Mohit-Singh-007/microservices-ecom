@@ -25,6 +25,10 @@ spring:
           uri: lb://USER
           predicates:
               - Path=/api/users/**
+        - id: order-service
+          uri: lb://ORDER
+          predicates:
+              - Path=/api/orders/**
 
 #eureka client setup
 eureka:
