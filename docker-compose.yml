@@ -1,6 +1,5 @@
 services:
 
-
   keycloak-db:
     image: postgres:16
     container_name: keycloak-db
@@ -8,7 +7,6 @@ services:
       POSTGRES_DB: keycloakdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-
     volumes:
       - keycloak-db-data:/var/lib/postgresql/data
     networks:
@@ -34,20 +32,29 @@ services:
       KC_HOSTNAME_PORT: 8180
       KC_HOSTNAME_STRICT: false
       KC_HTTP_ENABLED: true
-
     ports:
       - "8180:8080"
     depends_on:
-        keycloak-db:
-          condition: service_healthy
+      keycloak-db:
+        condition: service_healthy
     networks:
       - ecom-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - ecom-network
 
 volumes:
+  redis_data:
   keycloak-db-data:
 
 networks:
   ecom-network:
     driver: bridge
-
